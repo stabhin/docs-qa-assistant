@@ -1,6 +1,5 @@
 """Command-line entry point."""
 import argparse
-import json
 from pathlib import Path
 
 from docs_qa.answer import answer_question

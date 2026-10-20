@@ -73,24 +73,39 @@ class TfidfRetriever:
             chunk["text"] for chunk in chunks
         )
 
-    def search(self, question: str, top_k: int = 3) -> list[dict[str, Any]]:
-        """Return ranked matches; an empty list means no match passed threshold."""
-        question = question.strip()
-        if not question or top_k < 1:
-            return []
+    def search(self, question: str, top_k: int = 3) -> list[dict]:
+    question = question.strip()
 
-        query_vector = self.vectorizer.transform([question])
-        scores = cosine_similarity(query_vector, self.matrix).ravel()
-        ranked_indices = scores.argsort()[::-1]
+    if not question or top_k < 1:
+        return []
 
-        results = []
-        for index in ranked_indices:
-            score = float(scores[index])
-            if score < self.min_score:
-                break
-            result = dict(self.chunks[int(index)])
-            result["score"] = score
-            results.append(result)
-            if len(results) >= top_k:
-                break
-        return results
+    query_vector = self.vectorizer.transform([question])
+    scores = cosine_similarity(query_vector, self.matrix).ravel()
+
+    ranked_indices = scores.argsort()[::-1]
+
+    results = []
+    seen_doc_ids = set()
+
+    for index in ranked_indices:
+        score = float(scores[index])
+
+        if score < self.min_score:
+            break
+
+        chunk = self.chunks[int(index)]
+        doc_id = chunk["doc_id"]
+
+        # Skip additional chunks from the same document
+        if doc_id in seen_doc_ids:
+            continue
+
+        result = dict(chunk)
+        result["score"] = score
+        results.append(result)
+        seen_doc_ids.add(doc_id)
+
+        if len(results) >= top_k:
+            break
+
+    return results
