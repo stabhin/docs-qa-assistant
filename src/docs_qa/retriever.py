@@ -74,38 +74,38 @@ class TfidfRetriever:
         )
 
     def search(self, question: str, top_k: int = 3) -> list[dict]:
-    question = question.strip()
+        question = question.strip()
 
-    if not question or top_k < 1:
-        return []
+        if not question or top_k < 1:
+            return []
 
-    query_vector = self.vectorizer.transform([question])
-    scores = cosine_similarity(query_vector, self.matrix).ravel()
+        query_vector = self.vectorizer.transform([question])
+        scores = cosine_similarity(query_vector, self.matrix).ravel()
 
-    ranked_indices = scores.argsort()[::-1]
+        ranked_indices = scores.argsort()[::-1]
 
-    results = []
-    seen_doc_ids = set()
+        results = []
+        seen_doc_ids = set()
 
-    for index in ranked_indices:
-        score = float(scores[index])
+        for index in ranked_indices:
+            score = float(scores[index])
 
-        if score < self.min_score:
-            break
+            if score < self.min_score:
+                break
 
-        chunk = self.chunks[int(index)]
-        doc_id = chunk["doc_id"]
+            chunk = self.chunks[int(index)]
+            doc_id = chunk["doc_id"]
 
-        # Skip additional chunks from the same document
-        if doc_id in seen_doc_ids:
-            continue
+            # Skip additional chunks from the same document
+            if doc_id in seen_doc_ids:
+                continue
 
-        result = dict(chunk)
-        result["score"] = score
-        results.append(result)
-        seen_doc_ids.add(doc_id)
+            result = dict(chunk)
+            result["score"] = score
+            results.append(result)
+            seen_doc_ids.add(doc_id)
 
-        if len(results) >= top_k:
-            break
+            if len(results) >= top_k:
+                break
 
-    return results
+        return results
